@@ -1,0 +1,227 @@
+﻿@model List<GameStore.Models.Game>
+
+@{
+    ViewData["Title"] = "Главная";
+}
+
+<h1>Магазин игр</h1>
+
+@if (ViewBag.Username != null)
+{
+    <div>
+        <p>Пользователь: <b>@ViewBag.Username</b></p>
+        <p>Баланс: <b>@ViewBag.Balance ₽</b></p>
+
+        <a href="/User/Library">Библиотека</a> |
+        <a href="/User/Inventory">Инвентарь</a> |
+        <a href="/Market">Торговая площадка</a> |
+
+        <button id="notificationsButton" onclick="toggleNotifications()">🔔 Уведомления (0)</button> |
+        <button id="pendingButton" onclick="togglePending()">Подтверждение (0)</button> |
+
+        <a href="/Account/Logout">Выйти</a>
+    </div>
+}
+else
+{
+    <a href="/Account/Login">Войти</a>
+    <a href="/Account/Register">Регистрация</a>
+}
+
+<div id="notificationsBox"
+     style="display:none;
+    position:absolute;
+    right:20px;
+    top:120px;
+    width:300px;
+    background:white;
+    border:1px solid gray;
+    padding:10px;
+    box-shadow:0px 0px 10px rgba(0,0,0,0.2);">
+</div>
+
+<div id="pendingBox"
+     style="display:none;
+    position:absolute;
+    right:340px;
+    top:120px;
+    width:360px;
+    background:white;
+    border:1px solid gray;
+    padding:10px;
+    box-shadow:0px 0px 10px rgba(0,0,0,0.2);">
+</div>
+
+<hr />
+
+<a href="/Games">Перейти к полному каталогу игр</a>
+
+<hr />
+
+<h2>Рекомендуемые игры</h2>
+
+@if (Model.Count == 0)
+{
+    <p>Игры не найдены.</p>
+}
+else
+{
+    @foreach (var game in Model)
+    {
+        <div style="border:1px solid #ccc; padding:10px; margin-bottom:10px;">
+
+            <h3>@game.Title</h3>
+            <p>Цена: @game.Price ₽</p>
+
+            <a href="/Games/Details/@game.Id">Открыть</a>
+
+            @if (ViewBag.Username != null)
+            {
+                <form method="post" action="/Games/Buy/@game.Id">
+                    <button type="submit">Купить</button>
+                </form>
+            }
+
+        </div>
+    }
+}
+
+<script>
+    function loadNotificationCount(){
+        fetch("/Notification/UnreadCount")
+            .then(r => r.json())
+            .then(data => {
+                const btn = document.getElementById("notificationsButton");
+                if(btn){
+                    btn.innerText = "🔔 Уведомления (" + data.count + ")";
+                }
+            });
+    }
+
+    function loadPendingCount(){
+        fetch("/Market/PendingCount")
+            .then(r => r.json())
+            .then(data => {
+                const btn = document.getElementById("pendingButton");
+                if(btn){
+                    btn.innerText = "Подтверждение (" + data.count + ")";
+                }
+            });
+    }
+
+    function toggleNotifications(){
+
+        const box = document.getElementById("notificationsBox");
+
+        if(box.style.display === "none" || box.style.display === ""){
+
+            fetch("/Notification/Unread")
+            .then(r => r.json())
+            .then(data => {
+
+                box.innerHTML = "";
+
+                if(data.length === 0){
+                    box.innerHTML = "Нет уведомлений";
+                }
+
+                data.forEach(n => {
+
+                    const div = document.createElement("div");
+
+                    div.style.borderBottom = "1px solid #ccc";
+                    div.style.padding = "5px";
+
+                    div.innerText = n.message;
+
+                    box.appendChild(div);
+
+                });
+
+            });
+
+            box.style.display = "block";
+
+            fetch("/Notification/MarkRead",{
+                method:"POST"
+            }).then(() => {
+                loadNotificationCount();
+            });
+
+        }
+        else{
+            box.style.display = "none";
+        }
+    }
+
+    function togglePending(){
+
+        const box = document.getElementById("pendingBox");
+
+        if(box.style.display === "none" || box.style.display === ""){
+
+            fetch("/Market/Pending")
+            .then(r => r.json())
+            .then(data => {
+
+                box.innerHTML = "";
+
+                if(data.length === 0){
+                    box.innerHTML = "Нет предметов, ожидающих подтверждения";
+                }
+
+                data.forEach(n => {
+
+                    const div = document.createElement("div");
+
+                    div.style.borderBottom = "1px solid #ccc";
+                    div.style.padding = "8px";
+                    div.style.marginBottom = "8px";
+
+                    div.innerHTML =
+                        "<b>" + n.itemName + "</b><br>" +
+                        "Игра: " + n.gameTitle + "<br>" +
+                        "Цена: " + n.price + " ₽<br><br>" +
+                        "<button onclick='confirmListing(" + n.id + ")'>Подтвердить</button> " +
+                        "<button onclick='cancelListing(" + n.id + ")'>Отменить</button>";
+
+                    box.appendChild(div);
+
+                });
+
+            });
+
+            box.style.display = "block";
+        }
+        else{
+            box.style.display = "none";
+        }
+    }
+
+    function confirmListing(id){
+        fetch("/Market/Confirm/" + id, {
+            method:"POST"
+        })
+        .then(() => {
+            togglePending();
+            togglePending();
+            loadPendingCount();
+        });
+    }
+
+    function cancelListing(id){
+        fetch("/Market/Cancel/" + id, {
+            method:"POST"
+        })
+        .then(() => {
+            togglePending();
+            togglePending();
+            loadPendingCount();
+        });
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+        loadNotificationCount();
+        loadPendingCount();
+    });
+</script>

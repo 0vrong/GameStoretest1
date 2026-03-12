@@ -1,0 +1,33 @@
+﻿@model List<GameStore.Models.MarketListing>
+
+<h1>Торговая площадка</h1>
+
+<a href="/">На главную</a>
+
+<hr />
+
+@if (Model.Count == 0)
+{
+    <p>Лотов пока нет</p>
+}
+else
+{
+    foreach (var item in Model)
+    {
+        <div style="border:1px solid gray; padding:10px; margin-bottom:10px">
+
+            <h3>@item.Item.Name</h3>
+
+            <p>Игра: @item.Item.Game.Title</p>
+
+            <p>Продавец: @item.Seller.UserName</p>
+
+            <p>Цена: @item.Price ₽</p>
+
+            <form method="post" action="/Market/Buy/@item.Id">
+                <button type="submit">Купить</button>
+            </form>
+
+        </div>
+    }
+}

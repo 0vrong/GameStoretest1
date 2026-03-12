@@ -1,0 +1,11 @@
+﻿@model GameStore.Models.Game
+
+<h2>@Model.Title</h2>
+<a href="/Games">Назад к каталогу</a>
+<p>Разработчик: @Model.Developer</p>
+<p>Издатель: @Model.Publisher</p>
+<p>Цена: @Model.Price</p>
+
+<form method="post" action="/Games/Buy/@Model.Id">
+    <button type="submit">Купить</button>
+</form>
