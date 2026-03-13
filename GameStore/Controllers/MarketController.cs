@@ -14,6 +14,18 @@ namespace GameStore.Controllers
             _context = context;
         }
 
+        private IActionResult RedirectBackWithError(string message)
+        {
+            TempData["ErrorMessage"] = message;
+
+            var referer = Request.Headers["Referer"].ToString();
+
+            if (!string.IsNullOrWhiteSpace(referer))
+                return Redirect(referer);
+
+            return RedirectToAction("Index", "Home");
+        }
+
         public IActionResult Index()
         {
             var listings = _context.MarketListings
@@ -38,7 +50,7 @@ namespace GameStore.Controllers
                 .FirstOrDefault(x => x.UserId == userId && x.ItemId == itemId);
 
             if (userItem == null)
-                return Content("Предмет не найден в инвентаре");
+                return RedirectBackWithError("Предмет не найден в инвентаре.");
 
             var listing = new MarketListing
             {
@@ -52,6 +64,10 @@ namespace GameStore.Controllers
             _context.UserItems.Remove(userItem);
             _context.SaveChanges();
 
+            TempData["SuccessMessage"] = price > 500
+                ? "Предмет отправлен на подтверждение."
+                : "Предмет выставлен на торговую площадку.";
+
             return RedirectToAction("Inventory", "User");
         }
 
@@ -64,19 +80,25 @@ namespace GameStore.Controllers
                 return RedirectToAction("Login", "Account");
 
             var listing = _context.MarketListings
+                .Include(x => x.Item)
+                .ThenInclude(x => x.Game)
+                .Include(x => x.Seller)
                 .FirstOrDefault(x => x.Id == id && x.Status == "Active");
 
             if (listing == null)
-                return NotFound();
+                return RedirectBackWithError("Лот не найден.");
 
-            var buyer = _context.Users.First(x => x.Id == userId);
-            var seller = _context.Users.First(x => x.Id == listing.SellerId);
+            var buyer = _context.Users.FirstOrDefault(x => x.Id == userId);
+            var seller = _context.Users.FirstOrDefault(x => x.Id == listing.SellerId);
+
+            if (buyer == null || seller == null)
+                return RedirectBackWithError("Ошибка обработки покупки.");
 
             if (buyer.Id == seller.Id)
-                return Content("Нельзя купить свой предмет");
+                return RedirectBackWithError("Нельзя купить свой же предмет.");
 
             if (buyer.Balace < listing.Price)
-                return Content("Недостаточно средств");
+                return RedirectBackWithError("Недостаточно средств для покупки предмета.");
 
             buyer.Balace -= listing.Price;
             seller.Balace += listing.Price;
@@ -99,6 +121,7 @@ namespace GameStore.Controllers
             _context.MarketListings.Remove(listing);
             _context.SaveChanges();
 
+            TempData["SuccessMessage"] = "Предмет успешно куплен.";
             return RedirectToAction("Inventory", "User");
         }
 

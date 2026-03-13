@@ -1,9 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
-namespace GameStore.Views.Market
+namespace GameStore.Views.Shared
 {
-    public class CreateModel : PageModel
+    public class _TopbarModel : PageModel
     {
         public void OnGet()
         {

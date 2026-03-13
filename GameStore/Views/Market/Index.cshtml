@@ -5,78 +5,24 @@
 <head>
     <meta charset="utf-8" />
     <title>Торговая площадка</title>
-    <style>
-            body {
-                margin: 0;
-                font-family: Arial, Helvetica, sans-serif;
-                background: #121820;
-                color: #d6e0ea;
-            }
-
-            .page {
-                max-width: 1200px;
-                margin: 0 auto;
-                padding: 32px 24px;
-            }
-
-            h1 {
-                color: #ffffff;
-            }
-
-            a {
-                color: #66c0f4;
-                text-decoration: none;
-            }
-
-                a:hover {
-                    color: #ffffff;
-                }
-
-            .market-list {
-                display: flex;
-                flex-direction: column;
-                gap: 16px;
-                margin-top: 24px;
-            }
-
-            .lot-card {
-                background: linear-gradient(180deg, #16202d 0%, #10161d 100%);
-                border: 1px solid #24384a;
-                border-radius: 8px;
-                padding: 18px;
-            }
-
-                .lot-card h3 {
-                    margin: 0 0 10px;
-                    color: #ffffff;
-                }
-
-            .price {
-                color: #a4d007;
-                font-size: 18px;
-                font-weight: 700;
-                margin: 8px 0 14px;
-            }
-
-            .btn {
-                border: 1px solid #3b6e8c;
-                background: linear-gradient(180deg, #2a475e 0%, #1b3649 100%);
-                color: #eaf7ff;
-                padding: 8px 14px;
-                border-radius: 4px;
-                cursor: pointer;
-            }
-
-            .empty {
-                color: #8f98a0;
-                margin-top: 20px;
-            }
-    </style>
+    <link rel="stylesheet" href="~/css/site.css" />
 </head>
 <body>
+
+    @await Html.PartialAsync("_TopBar")
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert-box error-alert">@TempData["ErrorMessage"]</div>
+    }
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert-box success-alert">@TempData["SuccessMessage"]</div>
+    }
+
     <div class="page">
         <h1>Торговая площадка</h1>
-        <a href="/">На главную</a>
 
         @if (Model.Count == 0)
         {
@@ -101,5 +47,6 @@
             </div>
         }
     </div>
+
 </body>
 </html>

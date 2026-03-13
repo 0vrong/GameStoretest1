@@ -1,7 +1,6 @@
 ﻿using GameStore.Data;
 using GameStore.Models;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace GameStore.Controllers
 {
@@ -12,6 +11,18 @@ namespace GameStore.Controllers
         public GamesController(AppDbContext context)
         {
             _context = context;
+        }
+
+        private IActionResult RedirectBackWithError(string message)
+        {
+            TempData["ErrorMessage"] = message;
+
+            var referer = Request.Headers["Referer"].ToString();
+
+            if (!string.IsNullOrWhiteSpace(referer))
+                return Redirect(referer);
+
+            return RedirectToAction("Index", "Home");
         }
 
         public IActionResult Index()
@@ -41,18 +52,21 @@ namespace GameStore.Controllers
             var game = _context.Games.FirstOrDefault(g => g.Id == id);
 
             if (game == null)
-                return NotFound();
+                return RedirectBackWithError("Игра не найдена.");
 
             var user = _context.Users.FirstOrDefault(u => u.Id == userId);
 
-            if (user.Balace < game.Price)
-                return Content("Недостаточно средств");
+            if (user == null)
+                return RedirectBackWithError("Пользователь не найден.");
 
             var alreadyOwned = _context.UserGames
                 .Any(x => x.UserId == userId && x.GameId == id);
 
             if (alreadyOwned)
-                return Content("У вас уже есть эта игра");
+                return RedirectBackWithError("У вас уже есть эта игра.");
+
+            if (user.Balace < game.Price)
+                return RedirectBackWithError("Недостаточно средств для покупки игры.");
 
             user.Balace -= game.Price;
 
@@ -65,8 +79,22 @@ namespace GameStore.Controllers
 
             _context.UserGames.Add(userGame);
 
+            var items = _context.Items
+                .Where(x => x.GameId == id)
+                .ToList();
+
+            foreach (var item in items)
+            {
+                _context.UserItems.Add(new UserItem
+                {
+                    UserId = user.Id,
+                    ItemId = item.Id
+                });
+            }
+
             _context.SaveChanges();
 
+            TempData["SuccessMessage"] = "Игра успешно куплена.";
             return RedirectToAction("Liblary", "User");
         }
     }

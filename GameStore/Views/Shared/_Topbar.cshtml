@@ -1,0 +1,284 @@
+﻿@using Microsoft.AspNetCore.Http
+@using GameStore.Data
+@inject AppDbContext DbContext
+
+@{
+    int? currentUserId = Context.Session.GetInt32("UserId");
+    var currentUser = currentUserId != null ? DbContext.Users.FirstOrDefault(x => x.Id == currentUserId) : null;
+
+    string currentUserName = currentUser != null ? currentUser.UserName : "";
+    var currentBalance = currentUser != null ? currentUser.Balace : 0m;
+
+    string currentPath = Context.Request.Path.Value ?? "";
+    bool isHome = currentPath == "/";
+    bool isLibrary = currentPath.StartsWith("/User/Liblary");
+    bool isMarket = currentPath.StartsWith("/Market");
+    bool isInventory = currentPath.StartsWith("/User/Inventory");
+    bool isGames = currentPath.StartsWith("/Games");
+}
+
+@if (currentUserId != null)
+{
+    <div class="topbar">
+        <div class="topbar-inner">
+            <div class="brand"><a href="/">GameStore</a></div>
+
+            <div class="center-menu">
+                @if (!isHome)
+                {
+                    <a href="/">Магазин</a>
+                }
+
+                @if (!isLibrary)
+                {
+                    <a href="/User/Liblary">Библиотека</a>
+                }
+
+                @if (!isMarket)
+                {
+                    <a href="/Market">Торговая площадка</a>
+                }
+
+                @if (!isInventory)
+                {
+                    <a href="/User/Inventory">Инвентарь</a>
+                }
+            </div>
+
+            <div class="right-panel">
+                <div class="user-meta">
+                    <span>Пользователь: <b>@currentUserName</b></span>
+                    <span>Баланс: <b>@currentBalance ₽</b></span>
+                </div>
+
+                <button id="notificationsButton" class="action-btn" onclick="toggleNotifications(event)">🔔 (0)</button>
+                <button id="pendingButton" class="action-btn" onclick="togglePending(event)">Подтверждение (0)</button>
+                <a class="action-btn" href="/Account/Logout">Выйти</a>
+            </div>
+        </div>
+    </div>
+
+    <div id="notificationsBox" class="overlay-box">
+        <div class="overlay-title">Уведомления</div>
+    </div>
+
+    <div id="pendingBox" class="overlay-box left-box">
+        <div class="overlay-title">Ожидают подтверждения</div>
+    </div>
+
+    <script>
+        function loadNotificationCount() {
+            fetch("/Notification/UnreadCount")
+                .then(r => r.json())
+                .then(data => {
+                    const btn = document.getElementById("notificationsButton");
+                    if (btn) {
+                        btn.innerText = "🔔 (" + data.count + ")";
+                    }
+                });
+        }
+
+        function loadPendingCount() {
+            fetch("/Market/PendingCount")
+                .then(r => r.json())
+                .then(data => {
+                    const btn = document.getElementById("pendingButton");
+                    if (btn) {
+                        btn.innerText = "Подтверждение (" + data.count + ")";
+                    }
+                });
+        }
+
+        function loadNotificationsList() {
+            const box = document.getElementById("notificationsBox");
+
+            fetch("/Notification/Unread")
+                .then(r => r.json())
+                .then(data => {
+                    box.innerHTML = '<div class="overlay-title">Уведомления</div>';
+
+                    if (data.length === 0) {
+                        box.innerHTML += '<div class="empty-text">Нет уведомлений</div>';
+                        return;
+                    }
+
+                    data.forEach(n => {
+                        const div = document.createElement("div");
+                        div.className = "overlay-item";
+                        div.innerText = n.message;
+                        box.appendChild(div);
+                    });
+                });
+        }
+
+        function loadPendingList() {
+            const box = document.getElementById("pendingBox");
+
+            fetch("/Market/Pending")
+                .then(r => r.json())
+                .then(data => {
+                    box.innerHTML = '<div class="overlay-title">Ожидают подтверждения</div>';
+
+                    if (data.length === 0) {
+                        box.innerHTML += '<div class="empty-text">Нет предметов, ожидающих подтверждения</div>';
+                        return;
+                    }
+
+                    data.forEach(n => {
+                        const div = document.createElement("div");
+                        div.className = "overlay-item";
+                        div.innerHTML =
+                            "<b>" + n.itemName + "</b><br>" +
+                            "Игра: " + n.gameTitle + "<br>" +
+                            "Цена: " + n.price + " ₽";
+
+                        const actions = document.createElement("div");
+                        actions.className = "overlay-actions";
+
+                        const confirmBtn = document.createElement("button");
+                        confirmBtn.className = "action-btn";
+                        confirmBtn.innerText = "Подтвердить";
+                        confirmBtn.onclick = function () { confirmListing(n.id); };
+
+                        const cancelBtn = document.createElement("button");
+                        cancelBtn.className = "action-btn";
+                        cancelBtn.innerText = "Отменить";
+                        cancelBtn.onclick = function () { cancelListing(n.id); };
+
+                        actions.appendChild(confirmBtn);
+                        actions.appendChild(cancelBtn);
+                        div.appendChild(actions);
+
+                        box.appendChild(div);
+                    });
+                });
+        }
+
+        function toggleNotifications(event) {
+            event.stopPropagation();
+
+            const box = document.getElementById("notificationsBox");
+            const pendingBox = document.getElementById("pendingBox");
+
+            pendingBox.style.display = "none";
+
+            if (box.style.display === "none" || box.style.display === "") {
+                loadNotificationsList();
+                box.style.display = "block";
+
+                fetch("/Notification/MarkRead", {
+                    method: "POST"
+                }).then(() => {
+                    loadNotificationCount();
+                });
+            } else {
+                box.style.display = "none";
+            }
+        }
+
+        function togglePending(event) {
+            event.stopPropagation();
+
+            const box = document.getElementById("pendingBox");
+            const notificationsBox = document.getElementById("notificationsBox");
+
+            notificationsBox.style.display = "none";
+
+            if (box.style.display === "none" || box.style.display === "") {
+                loadPendingList();
+                box.style.display = "block";
+            } else {
+                box.style.display = "none";
+            }
+        }
+
+        function confirmListing(id) {
+            fetch("/Market/Confirm/" + id, {
+                method: "POST"
+            }).then(() => {
+                loadPendingList();
+                loadPendingCount();
+            });
+        }
+
+        function cancelListing(id) {
+            fetch("/Market/Cancel/" + id, {
+                method: "POST"
+            }).then(() => {
+                loadPendingList();
+                loadPendingCount();
+            });
+        }
+
+        function autoRefresh() {
+            loadNotificationCount();
+            loadPendingCount();
+
+            const notificationsBox = document.getElementById("notificationsBox");
+            const pendingBox = document.getElementById("pendingBox");
+
+            if (notificationsBox && notificationsBox.style.display === "block") {
+                loadNotificationsList();
+            }
+
+            if (pendingBox && pendingBox.style.display === "block") {
+                loadPendingList();
+            }
+        }
+
+        document.addEventListener("click", function (event) {
+            const notificationsBox = document.getElementById("notificationsBox");
+            const pendingBox = document.getElementById("pendingBox");
+            const notificationsButton = document.getElementById("notificationsButton");
+            const pendingButton = document.getElementById("pendingButton");
+
+            if (
+                notificationsBox &&
+                notificationsBox.style.display === "block" &&
+                !notificationsBox.contains(event.target) &&
+                event.target !== notificationsButton
+            ) {
+                notificationsBox.style.display = "none";
+            }
+
+            if (
+                pendingBox &&
+                pendingBox.style.display === "block" &&
+                !pendingBox.contains(event.target) &&
+                event.target !== pendingButton
+            ) {
+                pendingBox.style.display = "none";
+            }
+        });
+
+        document.addEventListener("DOMContentLoaded", function () {
+            loadNotificationCount();
+            loadPendingCount();
+            setInterval(autoRefresh, 5000);
+        });
+    </script>
+}
+else
+{
+    <div class="topbar">
+        <div class="topbar-inner">
+            <div class="brand"><a href="/">GameStore</a></div>
+
+            <div class="center-menu">
+                @if (!isHome)
+                {
+                    <a href="/">Магазин</a>
+                }
+                @if (!isGames)
+                {
+                    <a href="/Games">Каталог</a>
+                }
+            </div>
+
+            <div class="right-panel">
+                <a class="action-btn" href="/Account/Login">Войти</a>
+                <a class="action-btn" href="/Account/Register">Регистрация</a>
+            </div>
+        </div>
+    </div>
+}
