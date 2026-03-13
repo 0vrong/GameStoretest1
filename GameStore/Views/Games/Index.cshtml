@@ -1,24 +1,121 @@
 ﻿@model List<GameStore.Models.Game>
 
-<h1>Каталог игр</h1>
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8" />
+    <title>Каталог игр</title>
+    <style>
+            body {
+                margin: 0;
+                font-family: Arial, Helvetica, sans-serif;
+                background: #121820;
+                color: #d6e0ea;
+            }
 
-<a href="/">На главную</a>
+            .page {
+                max-width: 1200px;
+                margin: 0 auto;
+                padding: 28px 24px 40px;
+            }
 
-<hr />
+            h1 {
+                color: #ffffff;
+                margin-bottom: 20px;
+            }
 
-@foreach (var game in Model)
-{
-    <div style="border:1px solid gray; padding:10px; margin-bottom:10px">
+            a {
+                color: #66c0f4;
+                text-decoration: none;
+            }
 
-        <h3>@game.Title</h3>
+                a:hover {
+                    color: #ffffff;
+                }
 
-        <p>Цена: @game.Price ₽</p>
+            .back-link {
+                display: inline-block;
+                margin-bottom: 22px;
+            }
 
-        <a href="/Games/Details/@game.Id">Подробнее</a>
+            .games-list {
+                display: flex;
+                flex-direction: column;
+                gap: 16px;
+                align-items: flex-start;
+            }
 
-        <form method="post" action="/Games/Buy/@game.Id">
-            <button type="submit">Купить</button>
-        </form>
+            .game-row {
+                width: 100%;
+                max-width: 760px;
+                background: linear-gradient(180deg, #16202d 0%, #10161d 100%);
+                border: 1px solid #24384a;
+                border-radius: 8px;
+                padding: 18px;
+            }
 
+                .game-row h3 {
+                    margin: 0 0 10px;
+                    color: #ffffff;
+                    font-size: 24px;
+                }
+
+            .price {
+                color: #a4d007;
+                font-size: 18px;
+                font-weight: 700;
+                margin-bottom: 12px;
+            }
+
+            .row-actions {
+                display: flex;
+                gap: 10px;
+                flex-wrap: wrap;
+            }
+
+            .btn {
+                border: 1px solid #3b6e8c;
+                background: linear-gradient(180deg, #2a475e 0%, #1b3649 100%);
+                color: #eaf7ff;
+                padding: 8px 14px;
+                border-radius: 4px;
+                cursor: pointer;
+                font-size: 13px;
+            }
+
+                .btn:hover {
+                    background: linear-gradient(180deg, #3a6382 0%, #23465f 100%);
+                }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <h1>Каталог игр</h1>
+
+        <a class="back-link" href="/">На главную</a>
+
+        <div class="games-list">
+            @foreach (var game in Model)
+            {
+                <div class="game-row">
+                    <h3>@game.Title</h3>
+                    <div class="price">@game.Price ₽</div>
+
+                    <div style="margin-bottom:10px;">
+                        <span>Разработчик: @game.Developer</span><br />
+                        <span>Издатель: @game.Publisher</span>
+                    </div>
+
+                    <div class="row-actions">
+                        <a class="btn" href="/Games/Details/@game.Id">Подробнее</a>
+
+                        <form method="post" action="/Games/Buy/@game.Id" style="margin:0;">
+                            <button class="btn" type="submit">Купить</button>
+                        </form>
+                    </div>
+                </div>
+            }
+        </div>
     </div>
-}
+</body>
+</html>

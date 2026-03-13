@@ -1,15 +1,81 @@
-﻿<h2>Вход</h2>
+﻿<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8" />
+    <title>Вход</title>
+    <style>
+            body {
+                margin: 0;
+                font-family: Arial, Helvetica, sans-serif;
+                background: #121820;
+                color: #d6e0ea;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                min-height: 100vh;
+            }
 
-<form method="post">
+            .auth-card {
+                width: 360px;
+                background: linear-gradient(180deg, #16202d 0%, #10161d 100%);
+                border: 1px solid #24384a;
+                border-radius: 10px;
+                padding: 28px;
+            }
 
-    <input name="email" placeholder="Email" />
-    <br />
+            h2 {
+                margin-top: 0;
+                color: #ffffff;
+                text-align: center;
+            }
 
-    <input name="password" type="password" placeholder="Пароль" />
-    <br />
+            input {
+                width: 100%;
+                margin-bottom: 12px;
+                padding: 10px 12px;
+                border-radius: 4px;
+                border: 1px solid #3a5268;
+                background: #0f141a;
+                color: #ffffff;
+            }
 
-    <button type="submit">Войти</button>
+            button {
+                width: 100%;
+                border: 1px solid #3b6e8c;
+                background: linear-gradient(180deg, #2a475e 0%, #1b3649 100%);
+                color: #eaf7ff;
+                padding: 10px 14px;
+                border-radius: 4px;
+                cursor: pointer;
+            }
 
-</form>
+            .error {
+                color: #ff7b7b;
+                margin-top: 12px;
+                text-align: center;
+            }
 
-<p style="color:red">@ViewBag.Error</p>
+            .back {
+                display: block;
+                text-align: center;
+                margin-top: 14px;
+                color: #66c0f4;
+                text-decoration: none;
+            }
+    </style>
+</head>
+<body>
+    <div class="auth-card">
+        <h2>Вход</h2>
+
+        <form method="post">
+            <input name="email" placeholder="Email" />
+            <input name="password" type="password" placeholder="Пароль" />
+            <button type="submit">Войти</button>
+        </form>
+
+        <p class="error">@ViewBag.Error</p>
+        <a class="back" href="/">На главную</a>
+    </div>
+</body>
+</html>

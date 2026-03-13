@@ -4,23 +4,84 @@
     ViewData["Title"] = "Библиотека";
 }
 
-<h1>Моя библиотека игр</h1>
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8" />
+    <title>Библиотека</title>
+    <style>
+            body {
+                margin: 0;
+                font-family: Arial, Helvetica, sans-serif;
+                background: #121820;
+                color: #d6e0ea;
+            }
 
-<a href="/">На главную</a>
+            .page {
+                max-width: 1200px;
+                margin: 0 auto;
+                padding: 32px 24px;
+            }
 
-<hr />
+            h1 {
+                color: #ffffff;
+            }
 
-@if (Model.Count == 0)
-{
-    <p>У вас пока нет игр.</p>
-}
-else
-{
-    @foreach (var game in Model)
-    {
-        <div style="border:1px solid #ccc; padding:10px; margin-bottom:10px;">
-            <h3>@game.Title</h3>
-            <p>Цена: @game.Price ₽</p>
-        </div>
-    }
-}
+            a {
+                color: #66c0f4;
+                text-decoration: none;
+            }
+
+                a:hover {
+                    color: #ffffff;
+                }
+
+            .liblary-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+                gap: 18px;
+                margin-top: 24px;
+            }
+
+            .game-card {
+                background: linear-gradient(180deg, #16202d 0%, #10161d 100%);
+                border: 1px solid #24384a;
+                border-radius: 8px;
+                padding: 18px;
+            }
+
+                .game-card h3 {
+                    margin: 0 0 10px;
+                    color: #ffffff;
+                }
+
+            .price {
+                color: #a4d007;
+                font-weight: 700;
+            }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <h1>Моя библиотека игр</h1>
+        <a href="/">На главную</a>
+
+        @if (Model.Count == 0)
+        {
+            <p style="color:#8f98a0; margin-top:20px;">У вас пока нет игр.</p>
+        }
+        else
+        {
+            <div class="liblary-grid">
+                @foreach (var game in Model)
+                {
+                    <div class="game-card">
+                        <h3>@game.Title</h3>
+                        <div class="price">@game.Price ₽</div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</body>
+</html>

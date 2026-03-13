@@ -1,33 +1,105 @@
 ﻿@model List<GameStore.Models.MarketListing>
 
-<h1>Торговая площадка</h1>
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8" />
+    <title>Торговая площадка</title>
+    <style>
+            body {
+                margin: 0;
+                font-family: Arial, Helvetica, sans-serif;
+                background: #121820;
+                color: #d6e0ea;
+            }
 
-<a href="/">На главную</a>
+            .page {
+                max-width: 1200px;
+                margin: 0 auto;
+                padding: 32px 24px;
+            }
 
-<hr />
+            h1 {
+                color: #ffffff;
+            }
 
-@if (Model.Count == 0)
-{
-    <p>Лотов пока нет</p>
-}
-else
-{
-    foreach (var item in Model)
-    {
-        <div style="border:1px solid gray; padding:10px; margin-bottom:10px">
+            a {
+                color: #66c0f4;
+                text-decoration: none;
+            }
 
-            <h3>@item.Item.Name</h3>
+                a:hover {
+                    color: #ffffff;
+                }
 
-            <p>Игра: @item.Item.Game.Title</p>
+            .market-list {
+                display: flex;
+                flex-direction: column;
+                gap: 16px;
+                margin-top: 24px;
+            }
 
-            <p>Продавец: @item.Seller.UserName</p>
+            .lot-card {
+                background: linear-gradient(180deg, #16202d 0%, #10161d 100%);
+                border: 1px solid #24384a;
+                border-radius: 8px;
+                padding: 18px;
+            }
 
-            <p>Цена: @item.Price ₽</p>
+                .lot-card h3 {
+                    margin: 0 0 10px;
+                    color: #ffffff;
+                }
 
-            <form method="post" action="/Market/Buy/@item.Id">
-                <button type="submit">Купить</button>
-            </form>
+            .price {
+                color: #a4d007;
+                font-size: 18px;
+                font-weight: 700;
+                margin: 8px 0 14px;
+            }
 
-        </div>
-    }
-}
+            .btn {
+                border: 1px solid #3b6e8c;
+                background: linear-gradient(180deg, #2a475e 0%, #1b3649 100%);
+                color: #eaf7ff;
+                padding: 8px 14px;
+                border-radius: 4px;
+                cursor: pointer;
+            }
+
+            .empty {
+                color: #8f98a0;
+                margin-top: 20px;
+            }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <h1>Торговая площадка</h1>
+        <a href="/">На главную</a>
+
+        @if (Model.Count == 0)
+        {
+            <p class="empty">Лотов пока нет</p>
+        }
+        else
+        {
+            <div class="market-list">
+                @foreach (var item in Model)
+                {
+                    <div class="lot-card">
+                        <h3>@item.Item.Name</h3>
+                        <p>Игра: @item.Item.Game.Title</p>
+                        <p>Продавец: @item.Seller.UserName</p>
+                        <div class="price">@item.Price ₽</div>
+
+                        <form method="post" action="/Market/Buy/@item.Id">
+                            <button class="btn" type="submit">Купить</button>
+                        </form>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</body>
+</html>

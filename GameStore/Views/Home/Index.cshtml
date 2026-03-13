@@ -4,224 +4,544 @@
     ViewData["Title"] = "Главная";
 }
 
-<h1>Магазин игр</h1>
-
-@if (ViewBag.Username != null)
-{
-    <div>
-        <p>Пользователь: <b>@ViewBag.Username</b></p>
-        <p>Баланс: <b>@ViewBag.Balance ₽</b></p>
-
-        <a href="/User/Library">Библиотека</a> |
-        <a href="/User/Inventory">Инвентарь</a> |
-        <a href="/Market">Торговая площадка</a> |
-
-        <button id="notificationsButton" onclick="toggleNotifications()">🔔 Уведомления (0)</button> |
-        <button id="pendingButton" onclick="togglePending()">Подтверждение (0)</button> |
-
-        <a href="/Account/Logout">Выйти</a>
-    </div>
-}
-else
-{
-    <a href="/Account/Login">Войти</a>
-    <a href="/Account/Register">Регистрация</a>
-}
-
-<div id="notificationsBox"
-     style="display:none;
-    position:absolute;
-    right:20px;
-    top:120px;
-    width:300px;
-    background:white;
-    border:1px solid gray;
-    padding:10px;
-    box-shadow:0px 0px 10px rgba(0,0,0,0.2);">
-</div>
-
-<div id="pendingBox"
-     style="display:none;
-    position:absolute;
-    right:340px;
-    top:120px;
-    width:360px;
-    background:white;
-    border:1px solid gray;
-    padding:10px;
-    box-shadow:0px 0px 10px rgba(0,0,0,0.2);">
-</div>
-
-<hr />
-
-<a href="/Games">Перейти к полному каталогу игр</a>
-
-<hr />
-
-<h2>Рекомендуемые игры</h2>
-
-@if (Model.Count == 0)
-{
-    <p>Игры не найдены.</p>
-}
-else
-{
-    @foreach (var game in Model)
-    {
-        <div style="border:1px solid #ccc; padding:10px; margin-bottom:10px;">
-
-            <h3>@game.Title</h3>
-            <p>Цена: @game.Price ₽</p>
-
-            <a href="/Games/Details/@game.Id">Открыть</a>
-
-            @if (ViewBag.Username != null)
-            {
-                <form method="post" action="/Games/Buy/@game.Id">
-                    <button type="submit">Купить</button>
-                </form>
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8" />
+    <title>Главная</title>
+    <style>
+            * {
+                box-sizing: border-box;
             }
 
+            body {
+                margin: 0;
+                font-family: Arial, Helvetica, sans-serif;
+                background: #121820;
+                color: #d6e0ea;
+            }
+
+            a {
+                color: #66c0f4;
+                text-decoration: none;
+            }
+
+                a:hover {
+                    color: #ffffff;
+                }
+
+            .topbar {
+                position: sticky;
+                top: 0;
+                z-index: 1000;
+                background: linear-gradient(180deg, #1b2838 0%, #171d25 100%);
+                border-bottom: 1px solid #2a3f55;
+                min-height: 82px;
+                padding: 12px 24px;
+            }
+
+            .topbar-inner {
+                position: relative;
+                max-width: 1400px;
+                margin: 0 auto;
+                min-height: 58px;
+            }
+
+            .brand {
+                position: absolute;
+                left: 0;
+                top: 50%;
+                transform: translateY(-50%);
+                font-size: 28px;
+                font-weight: 700;
+                color: #ffffff;
+            }
+
+            .center-menu {
+                position: absolute;
+                left: 50%;
+                top: 50%;
+                transform: translate(-50%, -50%);
+                display: flex;
+                gap: 28px;
+                align-items: center;
+            }
+
+                .center-menu a {
+                    font-size: 15px;
+                    font-weight: 700;
+                    letter-spacing: 0.4px;
+                    text-transform: uppercase;
+                    color: #c7d5e0;
+                }
+
+                    .center-menu a:hover {
+                        color: #ffffff;
+                    }
+
+            .right-panel {
+                position: absolute;
+                right: 0;
+                top: 50%;
+                transform: translateY(-50%);
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                flex-wrap: wrap;
+                justify-content: flex-end;
+            }
+
+            .user-meta {
+                display: flex;
+                flex-direction: column;
+                align-items: flex-end;
+                margin-right: 6px;
+                color: #c7d5e0;
+                font-size: 13px;
+            }
+
+                .user-meta b {
+                    color: #ffffff;
+                }
+
+            .action-btn, .buy-btn, .ghost-btn {
+                border: 1px solid #3b6e8c;
+                background: linear-gradient(180deg, #2a475e 0%, #1b3649 100%);
+                color: #eaf7ff;
+                padding: 8px 14px;
+                border-radius: 4px;
+                cursor: pointer;
+                font-size: 13px;
+                transition: 0.2s;
+            }
+
+                .action-btn:hover, .buy-btn:hover, .ghost-btn:hover {
+                    background: linear-gradient(180deg, #3a6382 0%, #23465f 100%);
+                    color: #ffffff;
+                }
+
+            .auth-links {
+                padding: 16px 24px 0;
+                max-width: 1200px;
+                margin: 0 auto;
+            }
+
+                .auth-links a {
+                    margin-right: 14px;
+                    font-weight: 600;
+                }
+
+            .page-wrap {
+                max-width: 1200px;
+                margin: 0 auto;
+                padding: 28px 24px 40px;
+            }
+
+            .hero {
+                text-align: center;
+                margin-bottom: 28px;
+            }
+
+                .hero h1 {
+                    margin: 0 0 8px;
+                    font-size: 34px;
+                    color: #ffffff;
+                }
+
+                .hero p {
+                    margin: 0;
+                    color: #8f98a0;
+                    font-size: 15px;
+                }
+
+            .catalog-link {
+                display: block;
+                width: fit-content;
+                margin: 0 auto 28px;
+                padding: 10px 16px;
+                border-radius: 4px;
+                background: #1b2838;
+                border: 1px solid #2f4b63;
+            }
+
+            .section-title {
+                text-align: center;
+                font-size: 24px;
+                margin: 0 0 24px;
+                color: #ffffff;
+            }
+
+            .games-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(280px, 320px));
+                gap: 20px;
+                justify-content: center;
+            }
+
+            .game-card {
+                background: linear-gradient(180deg, #16202d 0%, #10161d 100%);
+                border: 1px solid #24384a;
+                border-radius: 8px;
+                padding: 18px;
+                box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+            }
+
+                .game-card h3 {
+                    margin: 0 0 12px;
+                    color: #ffffff;
+                    font-size: 22px;
+                }
+
+            .price {
+                color: #a4d007;
+                font-size: 18px;
+                font-weight: 700;
+                margin-bottom: 14px;
+            }
+
+            .card-actions {
+                display: flex;
+                gap: 10px;
+                align-items: center;
+                flex-wrap: wrap;
+            }
+
+            .overlay-box {
+                display: none;
+                position: fixed;
+                top: 92px;
+                right: 24px;
+                width: 360px;
+                max-height: 70vh;
+                overflow-y: auto;
+                background: #1b2838;
+                border: 1px solid #3b556b;
+                border-radius: 8px;
+                box-shadow: 0 10px 30px rgba(0,0,0,0.45);
+                z-index: 2000;
+                padding: 14px;
+            }
+
+                .overlay-box.left-box {
+                    right: 400px;
+                    width: 420px;
+                }
+
+            .overlay-title {
+                font-size: 18px;
+                font-weight: 700;
+                color: #ffffff;
+                margin: 0 0 12px;
+            }
+
+            .overlay-item {
+                border-bottom: 1px solid #2a3f55;
+                padding: 10px 0;
+            }
+
+                .overlay-item:last-child {
+                    border-bottom: none;
+                }
+
+                .overlay-item b {
+                    color: #ffffff;
+                }
+
+            .overlay-actions {
+                margin-top: 10px;
+                display: flex;
+                gap: 8px;
+                flex-wrap: wrap;
+            }
+
+            .empty-text {
+                color: #8f98a0;
+            }
+    </style>
+</head>
+<body>
+
+    @if (ViewBag.Username != null)
+    {
+        <div class="topbar">
+            <div class="topbar-inner">
+                <div class="brand">GameStore</div>
+
+                <div class="center-menu">
+                    <a href="/User/Liblary">Библиотека</a>
+                    <a href="/Market">Торговая площадка</a>
+                    <a href="/User/Inventory">Инвентарь</a>
+                </div>
+
+                <div class="right-panel">
+                    <div class="user-meta">
+                        <span>Пользователь: <b>@ViewBag.Username</b></span>
+                        <span>Баланс: <b>@ViewBag.Balance ₽</b></span>
+                    </div>
+
+                    <button id="notificationsButton" class="action-btn" onclick="toggleNotifications(event)">🔔 (0)</button>
+                    <button id="pendingButton" class="action-btn" onclick="togglePending(event)">Подтверждение (0)</button>
+                    <a class="action-btn" href="/Account/Logout">Выйти</a>
+                </div>
+            </div>
         </div>
     }
-}
+    else
+    {
+        <div class="topbar">
+            <div class="topbar-inner">
+                <div class="brand">GameStore</div>
 
-<script>
-    function loadNotificationCount(){
-        fetch("/Notification/UnreadCount")
-            .then(r => r.json())
-            .then(data => {
-                const btn = document.getElementById("notificationsButton");
-                if(btn){
-                    btn.innerText = "🔔 Уведомления (" + data.count + ")";
-                }
-            });
+                <div class="center-menu">
+                    <a href="/Games">Каталог</a>
+                </div>
+
+                <div class="right-panel">
+                    <a class="action-btn" href="/Account/Login">Войти</a>
+                    <a class="action-btn" href="/Account/Register">Регистрация</a>
+                </div>
+            </div>
+        </div>
     }
 
-    function loadPendingCount(){
-        fetch("/Market/PendingCount")
-            .then(r => r.json())
-            .then(data => {
-                const btn = document.getElementById("pendingButton");
-                if(btn){
-                    btn.innerText = "Подтверждение (" + data.count + ")";
+    <div id="notificationsBox" class="overlay-box">
+        <div class="overlay-title">Уведомления</div>
+    </div>
+
+    <div id="pendingBox" class="overlay-box left-box">
+        <div class="overlay-title">Ожидают подтверждения</div>
+    </div>
+
+    <div class="page-wrap">
+        <div class="hero">
+            <h1>Магазин игр</h1>
+            <p>Цифровые игры, торговая площадка и инвентарь предметов в одном приложении</p>
+        </div>
+
+        <a class="catalog-link" href="/Games">Перейти к полному каталогу игр</a>
+
+        <h2 class="section-title">Рекомендуемые игры</h2>
+
+        @if (Model.Count == 0)
+        {
+            <p class="empty-text" style="text-align:center;">Игры не найдены.</p>
+        }
+        else
+        {
+            <div class="games-grid">
+                @foreach (var game in Model)
+                {
+                    <div class="game-card">
+                        <h3>@game.Title</h3>
+                        <div class="price">@game.Price ₽</div>
+
+                        <div class="card-actions">
+                            <a class="ghost-btn" href="/Games/Details/@game.Id">Открыть</a>
+
+                            @if (ViewBag.Username != null)
+                            {
+                                <form method="post" action="/Games/Buy/@game.Id" style="margin:0;">
+                                    <button class="buy-btn" type="submit">Купить</button>
+                                </form>
+                            }
+                        </div>
+                    </div>
                 }
-            });
-    }
+            </div>
+        }
+    </div>
 
-    function toggleNotifications(){
+    <script>
+            function loadNotificationCount() {
+                fetch("/Notification/UnreadCount")
+                    .then(r => r.json())
+                    .then(data => {
+                        const btn = document.getElementById("notificationsButton");
+                        if (btn) {
+                            btn.innerText = "🔔 (" + data.count + ")";
+                        }
+                    });
+            }
 
-        const box = document.getElementById("notificationsBox");
+            function loadPendingCount() {
+                fetch("/Market/PendingCount")
+                    .then(r => r.json())
+                    .then(data => {
+                        const btn = document.getElementById("pendingButton");
+                        if (btn) {
+                            btn.innerText = "Подтверждение (" + data.count + ")";
+                        }
+                    });
+            }
 
-        if(box.style.display === "none" || box.style.display === ""){
+            function loadNotificationsList() {
+                const box = document.getElementById("notificationsBox");
 
-            fetch("/Notification/Unread")
-            .then(r => r.json())
-            .then(data => {
+                fetch("/Notification/Unread")
+                    .then(r => r.json())
+                    .then(data => {
+                        box.innerHTML = '<div class="overlay-title">Уведомления</div>';
 
-                box.innerHTML = "";
+                        if (data.length === 0) {
+                            box.innerHTML += '<div class="empty-text">Нет уведомлений</div>';
+                            return;
+                        }
 
-                if(data.length === 0){
-                    box.innerHTML = "Нет уведомлений";
+                        data.forEach(n => {
+                            const div = document.createElement("div");
+                            div.className = "overlay-item";
+                            div.innerText = n.message;
+                            box.appendChild(div);
+                        });
+                    });
+            }
+
+            function loadPendingList() {
+                const box = document.getElementById("pendingBox");
+
+                fetch("/Market/Pending")
+                    .then(r => r.json())
+                    .then(data => {
+                        box.innerHTML = '<div class="overlay-title">Ожидают подтверждения</div>';
+
+                        if (data.length === 0) {
+                            box.innerHTML += '<div class="empty-text">Нет предметов, ожидающих подтверждения</div>';
+                            return;
+                        }
+
+                        data.forEach(n => {
+                            const div = document.createElement("div");
+                            div.className = "overlay-item";
+                            div.innerHTML =
+                                "<b>" + n.itemName + "</b><br>" +
+                                "Игра: " + n.gameTitle + "<br>" +
+                                "Цена: " + n.price + " ₽";
+
+                            const actions = document.createElement("div");
+                            actions.className = "overlay-actions";
+
+                            const confirmBtn = document.createElement("button");
+                            confirmBtn.className = "action-btn";
+                            confirmBtn.innerText = "Подтвердить";
+                            confirmBtn.onclick = function () { confirmListing(n.id); };
+
+                            const cancelBtn = document.createElement("button");
+                            cancelBtn.className = "action-btn";
+                            cancelBtn.innerText = "Отменить";
+                            cancelBtn.onclick = function () { cancelListing(n.id); };
+
+                            actions.appendChild(confirmBtn);
+                            actions.appendChild(cancelBtn);
+                            div.appendChild(actions);
+
+                            box.appendChild(div);
+                        });
+                    });
+            }
+
+            function toggleNotifications(event) {
+                event.stopPropagation();
+
+                const box = document.getElementById("notificationsBox");
+                const pendingBox = document.getElementById("pendingBox");
+
+                pendingBox.style.display = "none";
+
+                if (box.style.display === "none" || box.style.display === "") {
+                    loadNotificationsList();
+                    box.style.display = "block";
+
+                    fetch("/Notification/MarkRead", {
+                        method: "POST"
+                    }).then(() => {
+                        loadNotificationCount();
+                    });
+                } else {
+                    box.style.display = "none";
                 }
+            }
 
-                data.forEach(n => {
+            function togglePending(event) {
+                event.stopPropagation();
 
-                    const div = document.createElement("div");
+                const box = document.getElementById("pendingBox");
+                const notificationsBox = document.getElementById("notificationsBox");
 
-                    div.style.borderBottom = "1px solid #ccc";
-                    div.style.padding = "5px";
+                notificationsBox.style.display = "none";
 
-                    div.innerText = n.message;
+                if (box.style.display === "none" || box.style.display === "") {
+                    loadPendingList();
+                    box.style.display = "block";
+                } else {
+                    box.style.display = "none";
+                }
+            }
 
-                    box.appendChild(div);
-
+            function confirmListing(id) {
+                fetch("/Market/Confirm/" + id, {
+                    method: "POST"
+                }).then(() => {
+                    loadPendingList();
+                    loadPendingCount();
                 });
+            }
 
-            });
+            function cancelListing(id) {
+                fetch("/Market/Cancel/" + id, {
+                    method: "POST"
+                }).then(() => {
+                    loadPendingList();
+                    loadPendingCount();
+                });
+            }
 
-            box.style.display = "block";
-
-            fetch("/Notification/MarkRead",{
-                method:"POST"
-            }).then(() => {
+            function autoRefresh() {
                 loadNotificationCount();
-            });
+                loadPendingCount();
 
-        }
-        else{
-            box.style.display = "none";
-        }
-    }
+                const notificationsBox = document.getElementById("notificationsBox");
+                const pendingBox = document.getElementById("pendingBox");
 
-    function togglePending(){
-
-        const box = document.getElementById("pendingBox");
-
-        if(box.style.display === "none" || box.style.display === ""){
-
-            fetch("/Market/Pending")
-            .then(r => r.json())
-            .then(data => {
-
-                box.innerHTML = "";
-
-                if(data.length === 0){
-                    box.innerHTML = "Нет предметов, ожидающих подтверждения";
+                if (notificationsBox.style.display === "block") {
+                    loadNotificationsList();
                 }
 
-                data.forEach(n => {
+                if (pendingBox.style.display === "block") {
+                    loadPendingList();
+                }
+            }
 
-                    const div = document.createElement("div");
+            document.addEventListener("click", function (event) {
+                const notificationsBox = document.getElementById("notificationsBox");
+                const pendingBox = document.getElementById("pendingBox");
+                const notificationsButton = document.getElementById("notificationsButton");
+                const pendingButton = document.getElementById("pendingButton");
 
-                    div.style.borderBottom = "1px solid #ccc";
-                    div.style.padding = "8px";
-                    div.style.marginBottom = "8px";
+                if (
+                    notificationsBox &&
+                    notificationsBox.style.display === "block" &&
+                    !notificationsBox.contains(event.target) &&
+                    event.target !== notificationsButton
+                ) {
+                    notificationsBox.style.display = "none";
+                }
 
-                    div.innerHTML =
-                        "<b>" + n.itemName + "</b><br>" +
-                        "Игра: " + n.gameTitle + "<br>" +
-                        "Цена: " + n.price + " ₽<br><br>" +
-                        "<button onclick='confirmListing(" + n.id + ")'>Подтвердить</button> " +
-                        "<button onclick='cancelListing(" + n.id + ")'>Отменить</button>";
-
-                    box.appendChild(div);
-
-                });
-
+                if (
+                    pendingBox &&
+                    pendingBox.style.display === "block" &&
+                    !pendingBox.contains(event.target) &&
+                    event.target !== pendingButton
+                ) {
+                    pendingBox.style.display = "none";
+                }
             });
 
-            box.style.display = "block";
-        }
-        else{
-            box.style.display = "none";
-        }
-    }
+            document.addEventListener("DOMContentLoaded", function () {
+                loadNotificationCount();
+                loadPendingCount();
+                setInterval(autoRefresh, 5000);
+            });
+    </script>
 
-    function confirmListing(id){
-        fetch("/Market/Confirm/" + id, {
-            method:"POST"
-        })
-        .then(() => {
-            togglePending();
-            togglePending();
-            loadPendingCount();
-        });
-    }
-
-    function cancelListing(id){
-        fetch("/Market/Cancel/" + id, {
-            method:"POST"
-        })
-        .then(() => {
-            togglePending();
-            togglePending();
-            loadPendingCount();
-        });
-    }
-
-    document.addEventListener("DOMContentLoaded", function () {
-        loadNotificationCount();
-        loadPendingCount();
-    });
-</script>
+</body>
+</html>
